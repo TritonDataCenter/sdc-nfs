@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+<!DOCTYPE service_bundle SYSTEM "/usr/share/lib/xml/dtd/service_bundle.dtd.1">
+<!--
+	Copyright 2016, Joyent, Inc.
+ 	This is a sample SMF manifest. If you want to actually use it, you'll
+ 	need to fix the paths to node, the server and the config file with the
+        paths to whereever those files are installed.
+ -->
+
+<service_bundle type="manifest" name="sdc-nfs">
+<service
+	name="smartdc/application/sdc-nfs"
+	type="service"
+	version="1">
+
+	<dependency
+		name="network"
+		grouping="require_all"
+		restart_on="error"
+		type="service">
+		<service_fmri value="svc:/network/physical" />
+	</dependency>
+
+	<dependency
+		name="rpcbind"
+		grouping="require_all"
+		restart_on="error"
+		type="service">
+		<service_fmri value="svc:/network/rpc/bind" />
+	</dependency>
+
+	<dependency
+		name="filesystem"
+		grouping="require_all"
+		restart_on="error"
+		type="service">
+		<service_fmri value="svc:/system/filesystem/local" />
+	</dependency>
+
+	<exec_method
+		type="method"
+		name="start"
+		exec="/opt/local/bin/node /opt/local/bin/server.js -f /opt/local/etc/sdc-nfs.json &amp;"
+		timeout_seconds="30" />
+
+	<exec_method
+		type="method"
+		name="stop"
+		exec=":kill -TERM"
+		timeout_seconds="30" />
+
+	<instance name="default" enabled="true" />
+
+	<stability value='Unstable' />
+
+	<template>
+		<common_name>
+			<loctext xml:lang="C">SDC NFS Server</loctext>
+		</common_name>
+	</template>
+
+</service>
+</service_bundle>

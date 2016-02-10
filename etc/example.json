@@ -1,0 +1,36 @@
+{
+    "portmap": {
+        "_comment": "usehost forces use of the system's portmapper",
+        "usehost": 1
+    },
+    "mount": {
+        "_comment": "set address if serving network beyond localhost",
+        "address": "0.0.0.0",
+        "_comment2": "can deny/allow mounting by given host addresses",
+        "_comment3": "normally use only one of these lists",
+        "hosts_deny": {
+            "192.168.0.12": {},
+            "192.168.0.13": {}
+        },
+        "hosts_allow": {
+            "127.0.0.1": {},
+            "192.168.0.10": {},
+            "192.168.0.11": {}
+        },
+        "_comment4": "can limit access to portion of file system",
+        "exports": {
+            "/foo.bar/stor/project": {},
+            "/foo.bar/public": {}
+        }
+    },
+    "nfs": {
+        "_comment": "can specify uid/gid for 'nobody' on clients",
+        "uid": 65534,
+        "gid": 65534,
+        "_comment2": "tunables for file descriptor cache",
+        "fd_cache": {
+            "max": 50,
+            "ttl": 15
+        }
+    }
+}

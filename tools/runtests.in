@@ -1,0 +1,128 @@
+#!/bin/bash
+#
+# Copyright (c) 2012, Joyent, Inc. All rights reserved.
+#
+# Run the TODONAME tests.
+# Run `./runtests -h` for usage info.
+#
+
+if [ "$TRACE" != "" ]; then
+    export PS4='${BASH_SOURCE}:${LINENO}: ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+    set -o xtrace
+fi
+set -o errexit
+set -o pipefail
+
+
+
+#---- guard
+
+if [[ ! -f "/lib/sdc/.sdc-test-no-production-data" ]]; then
+    cat <<EOF
+To run this test you must create the file:
+
+    /lib/sdc/.sdc-test-no-production-data
+
+after ensuring you have no production data on this SDC.
+EOF
+    exit 2
+fi
+
+
+
+#---- config
+
+NAME=TODONAME
+TOP=$(cd $(dirname $0)/../; pwd)
+
+
+
+#---- support functions
+
+function fatal
+{
+    echo "$(basename $0): fatal error: $*"
+    exit 1
+}
+
+function usage
+{
+    echo "Usage:"
+    echo "  runtests [OPTIONS...]"
+    echo ""
+    echo "Options:"
+    echo "  -f FILTER   Filter pattern (substring match) for test files to run."
+}
+
+
+
+#---- mainline
+
+start_time=$(date +%s)
+
+# Options.
+opt_test_pattern=
+while getopts "hf:" opt
+do
+    case "$opt" in
+        h)
+            usage
+            exit 0
+            ;;
+        f)
+            opt_test_pattern=$OPTARG
+            ;;
+        *)
+            usage
+            exit 1
+            ;;
+    esac
+done
+
+OUTPUT_DIR=/var/tmp/${NAME}test
+echo "# Create output dir ($OUTPUT_DIR)."
+rm -rf $OUTPUT_DIR
+mkdir -p $OUTPUT_DIR
+
+
+
+#---- start tests
+
+# TODO
+# Project specific setup and test running goes here.
+# - TAP output should be redirected or tee'd to $OUTPUT_DIR/*.tap
+#   This is used (a) to summarize below and (b) for the Jenkins Job TAP
+#   parsing/reporting.
+# - If reasonable, use $opt_test_pattern to filter the set of test files run.
+#
+# Some examples:
+# - https://mo.joyent.com/amon/blob/master/test/runtests
+# - https://mo.joyent.com/smartos-live/blob/master/src/vm/runtests
+# TODO
+
+
+
+#---- summary
+
+echo ""
+echo "# test results:"
+
+end_time=$(date +%s)
+elapsed=$((${end_time} - ${start_time}))
+
+tests=$(grep "^# tests [0-9]" $OUTPUT_DIR/*.tap | cut -d ' ' -f3 | xargs | tr ' ' '+' | bc)
+passed=$(grep "^# pass  [0-9]" $OUTPUT_DIR/*.tap | tr -s ' ' | cut -d ' ' -f3 | xargs | tr ' ' '+' | bc)
+[[ -z ${tests} ]] && tests=0
+[[ -z ${passed} ]] && passed=0
+fail=$((${tests} - ${passed}))
+
+echo "# Completed in ${elapsed} seconds."
+echo -e "# \033[32mPASS: ${passed} / ${tests}\033[39m"
+if [[ ${fail} -gt 0 ]]; then
+    echo -e "# \033[31mFAIL: ${fail} / ${tests}\033[39m"
+fi
+echo ""
+
+if [[ ${tests} != ${passed} ]]; then
+    exit 1
+fi

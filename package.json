@@ -1,0 +1,47 @@
+{
+    "name": "sdc-nfs",
+    "description": "User-level NFS Server",
+    "version": "0.1.0",
+    "author": {
+        "name": "Joyent, Inc.",
+        "url": "http://joyent.com/"
+    },
+    "license": "MPL-2.0",
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/joyent/sdc-nfs.git"
+    },
+    "bugs": {
+        "url": "https://github.com/joyent/sdc-nfs/issues"
+    },
+    "dependencies": {
+        "assert-plus": "0.1.5",
+        "bunyan": "0.22.0",
+        "clone": "0.1.11",
+        "dashdash": "1.3.2",
+        "leveldown": "0.10.0",
+        "levelup": "0.18.1",
+        "lru-cache": "2.5.0",
+        "lstream": "0.0.3",
+        "mkdirp": "0.3.5",
+        "nfs": "0.1.0",
+        "node-uuid": "1.4.1",
+        "once": "1.2.0",
+        "oncrpc": "0.1.0",
+        "statvfs": "2.1.0",
+        "userid": "0.1.1",
+        "vasync": "1.4.0"
+    },
+    "devDependencies": {
+        "nodeunit": "0.8.2",
+        "nodeunit-plus": "0.0.1",
+        "rimraf": "2.2.2"
+    },
+    "scripts": {
+        "start:": "node ./server.js | ./node_modules/.bin/bunyan",
+        "test": "nodeunit test/*.test.js"
+    },
+    "engines": {
+        "node" : ">=0.10.18 <0.12"
+    }
+}

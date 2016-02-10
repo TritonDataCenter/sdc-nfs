@@ -1,0 +1,12 @@
+#!/bin/sh
+
+dir=`dirname $0`
+
+euid=`id -u`
+
+if [ $euid != 0 ]; then
+    echo "Error: sdc-nfs must be started as root"
+    exit 1
+fi
+
+node $dir/../server.js

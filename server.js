@@ -346,7 +346,7 @@ function convert_neg_id(id)
     };
 
     function cleanup() {
-        fhdb.shutdown(function (err) {
+        fhdb.close(function (err) {
             if (err) {
                 log.warn(err, 'file handle database shutdown error');
             }

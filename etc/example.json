@@ -19,8 +19,8 @@
         },
         "_comment4": "can limit access to portion of file system",
         "exports": {
-            "/foo.bar/stor/project": {},
-            "/foo.bar/public": {}
+            "/data/project": {},
+            "/data/public": {}
         }
     },
     "nfs": {

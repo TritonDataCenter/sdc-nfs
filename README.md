@@ -1,8 +1,7 @@
 # sdc-nfs
 
-`sdc-nfs` implements a user-level
-[NFS vers. 3](http://tools.ietf.org/html/rfc1813)
-server in [node.js](http://nodejs.org/) and **requires** v0.10.x.
+`sdc-nfs` implements a user-level [NFS v3](http://tools.ietf.org/html/rfc1813)
+server in [node.js](http://nodejs.org/).
 
 - [Overview](#overview)
 - [Getting Started](#getting-started)
@@ -17,24 +16,26 @@ server in [node.js](http://nodejs.org/) and **requires** v0.10.x.
 ## Overview
 
 The server is a user-level process that runs locally and services NFS requests.
-Its primary purpose is to enable NFS service from within a SmartOS zone,
-which is otherwise unable to act as an NFS server.
+Its primary purpose is to enable NFS service from within a SmartOS zone, which
+is otherwise unable to act as an NFS server.
 
 The server includes a built-in portmapper, but it will also interoperate
-transparently with the zone's portmapper (usually `rpcbind`) if one is
-running. The server also includes a built-in `mountd` and `nfsd`. There is no
-`lockd` provided by the server.
+transparently with the zone's portmapper (usually `rpcbind`) if one is running.
+The server also includes a built-in `mountd` and `nfsd`. There is no `lockd`
+provided by the server.
 
-By default, the server only listens on the localhost address and only
-serves files locally. However, it can be configured to serve files to
-external hosts.
+By default, the server only listens on the localhost address and only serves
+files locally. However, for production use it should be configured to serve
+files to external hosts.
+
+The server **requires** at least v0.10.x of [node.js](http://nodejs.org/).
 
 ## Getting Started
 
 Clone the repo then run `npm install` within the clone to build all of the
 dependencies. The 'Configuration' section of this readme describes how to
-configure the server before you can run it. The 'Usage' section of this
-readme describes how to start the server and how to perform an NFS mount.
+configure the server before you run it. The 'Usage' section of this readme
+describes how to start the server and how to perform an NFS mount.
 
 ## Configuration
 
@@ -52,16 +53,16 @@ self-explanatory, here is some additional information.
     other than localhost for the server to listen on. Using '0.0.0.0' tells the
     server to listen on all addresses. Both the `mountd` and `nfsd` within the
     server will listen on the given address. It is a good idea to limit foreign
-    host access when listening on the external network. The `hosts_allow` or
+    host access if listening on the external network. The `hosts_allow` or
     `hosts_deny` sections can be used to restrict access to the given IP
-    addresses. The `exports` section can also be used to restrict access to
-    the specified portions of the local filesystem.
+    addresses. The `exports` section can be used to restrict access to the
+    specified portions of the local filesystem.
 
-  * The `nfs` section can be used to set the `uid` and `gid` values for
-    'nobody'. This is useful if NFS clients are running a different OS, which
-    uses different values for 'nobody', as compared to the server (e.g. Darwin
-    vs.  Linux). The `fd-cache` section can be used to configure the server's
-    file descriptor cache, although this is normally not necessary.
+  * The `nfs` section is normally not needed, but it can be used to set the
+    `uid` and `gid` values for 'nobody'. This is useful if NFS clients are
+    running a different OS, which uses different values for 'nobody', as
+    compared to the server. The `fd-cache` section can be used to configure the
+    server's file descriptor cache.
 
 ## Usage
 
@@ -71,8 +72,7 @@ expected. Once you know things are working correctly, you may want to set up
 a service so that the server runs automatically.
 
 The server must be started as root since it needs access to the portmapper's
-privileged port. Once the server is running, it lowers its uid to 'nobody'
-to improve security. The `sudo` or `pfexec` commands are typically used to run
+privileged port. The `sudo` or `pfexec` commands are typically used to run
 a command as root, depending on which OS you're using.
 
 In an lx zone the server can be run with no config file like:
@@ -85,36 +85,39 @@ In a native zone the server can be run like:
 
 To pass in a config file, use the -f option:
 
-    sudo node server.js -f etc/myconfig.json
+    pfexec node server.js -f etc/myconfig.json
 
 All output logging is done via [bunyan](https://github.com/trentm/node-bunyan).
-Once started, the server will output an
-occasional log message, but the `-d` or `-v` options can be used to change the
-bunyan logging level to either 'debug' or 'trace'. Logging at either of these
-levels is not recommended, except during debugging, since there will be many
-log entries for each NFS operation. You may want to redirect the output from
-the server into a file:
+Once started, the server will output an occasional log message, but the `-d` or
+`-v` options can be used to change the bunyan logging level to either 'debug'
+or 'trace'. Logging at either of these levels is not recommended, except during
+debugging, since there will be many log entries for each NFS operation. You may
+want to redirect the output from the server into a file:
 
-    sudo node server.js -d -f etc/myconfig.json >log 2>&1
+    pfexec node server.js -d -f etc/myconfig.json >log 2>&1
 
 To mount a directory, use the standard NFS client `mount` command with a path
 on the server. For example:
 
-    sudo mount 127.0.0.1:/foo /mnt
+    pfexec mount 127.0.0.1:/data /mnt
 
 Once you have confirmed that the server works as expected, you can set up a
-service on your system so that the server runs automatically when the system
-boots. Setting up a service like this is OS-specific and is discussed in that
-section for each operating system.
+service in your zone so that the server runs automatically when the zone boots.
+This is discussed in the SmartOS section below.
 
 ## Limitations
 
-XXX TBD
+The NFS mknod(2) operation is not supported.
+
+AUTH_SYS is the only style of authorization supported.
+
+UID/GID mapping between the server and clients is outside the scope of this
+implementation.
 
 ## OS Specific Considerations
 
-This section discusses any issues that are specific to running the server on
-a given operating system.
+This section discusses any issues that are specific to using or running the
+server in a specific type of zone.
 
 
 ### lx-branded zones
@@ -125,39 +128,7 @@ the `/sbin/mount.nfs` command which is needed to perform a mount, while others
 
     apt-get install nfs-common
 
-On Centos, install the `nfs-utils` package. Depending on the choices described
-below, you may also need to install the `rpcbind` package.
-
-    yum install nfs-utils
-    yum install rpcbind
-
-Based on the distribution's package manager and package dependencies, the
-'rpcbind' command may have been installed and started. However, due to a
-mis-design in the Linux rpcbind code, the sdc-nfs server will not be able to
-register with the system's rpcbind. There are two options to work around this:
-
-  * Disable the system's rpcbind and let the server use its built-in
-    portmapper. The method for disabling the system's rpcbind varies depending
-    on the service manager that the system uses. If 'rpcbind' is in a seperate
-    package from '/sbin/mount.nfs', then you could simply uninstall that
-    package. To disable 'rpcbind' on Ubuntu you can run: `stop portmap`.
-
-  * Run the system's rpcbind in 'insecure' mode using the -i option. The
-    mechanism for specifying customized options for a service varies by
-    distribution and release. The rpcbind configuration file may be named
-    `/etc/init/portmap.conf` or `/etc/sysconfig/rpcbind`. For a distribution
-    which uses traditional sysvinit rc files you may need to  edit
-    `/etc/init.d/rpcbind` and explicitly add the option to the invocation of
-    rpcbind in the script.
-
-    Here is an example entry for the `/etc/sysconfig/rpcbind` file.
-        RPCBIND_ARGS="-i"
-
-If running the sdc-nfs server inside an lx-branded zone, the built-in
-portmapper may not work properly. In this case, the second option above (using
-the system's rpcbind) must be used.
-
-On Linux the uid/gid for 'nobody' is 65534.
+On Centos, install the `nfs-utils` package.
 
 There is no lock manager included in the server, so you must disable locking
 when you mount. e.g.
@@ -167,11 +138,11 @@ when you mount. e.g.
 When mounting from inside an lx-branded zone you may need to explicitly
 specify that you want to use the NFSv3 protocol. e.g.
 
-    mount -o nolock,vers=3 127.0.0.1:/foo.bar/public /home/foo/mnt
+    mount -o nolock,vers=3 127.0.0.1:/data /home/foo/mnt
 
 ### SmartOS
 
-In order to mount from the host, the system's 'rpcbind' must be running.  The
+In order to mount from the host, the zone's 'rpcbind' must be running.  The
 server's built-in portmapper cannot be used. If the svc is not already enabled,
 enable it.
 
@@ -186,8 +157,6 @@ If this is set to true, you need to change it to false.
 
     svccfg -s bind setprop config/local_only=false
     svcadm refresh bind
-
-On SmartOS the uid/gid for 'nobody' is 60001.
 
 The `svc/smf/sdc-nfs.xml` file provides an example configuration for
 smf(5). If necessary, edit the file and provide the correct paths to 'node',

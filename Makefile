@@ -1,5 +1,5 @@
 #
-# Copyright 2016, Joyent, Inc.
+# Copyright 2018, Joyent, Inc.
 #
 # Makefile: for the SDC nfs service
 #
@@ -19,20 +19,9 @@ JSL_CONF_NODE	 = tools/jsl.node.conf
 JSL_FILES_NODE	 = $(JS_FILES)
 JSSTYLE_FILES	 = $(JS_FILES)
 JSSTYLE_FLAGS	 = -f tools/jsstyle.conf
-
-NODE_PREBUILT_VERSION=v0.10.21
-
-ifeq ($(shell uname -s),SunOS)
-	NODE_PREBUILT_CC_VERSION=4.6.2
-	NODE_PREBUILT_TAG=zone
-endif
+NPM     := npm
 
 include ./tools/mk/Makefile.defs
-#ifeq ($(shell uname -s),SunOS)
-#	include ./tools/mk/Makefile.node_prebuilt.defs
-#else
-	NPM	:= npm
-#endif
 include ./tools/mk/Makefile.smf.defs
 
 #
@@ -54,8 +43,5 @@ test: $(NODEUNIT)
 #	$(NODEUNIT) test/*.test.js
 
 include ./tools/mk/Makefile.deps
-ifeq ($(shell uname -s),SunOS)
-	include ./tools/mk/Makefile.node_prebuilt.targ
-endif
 include ./tools/mk/Makefile.smf.targ
 include ./tools/mk/Makefile.targ
